@@ -32,6 +32,8 @@ import math
 LOGGER = singer.get_logger()
 SESSION = requests.Session()
 
+created_schemas = []
+
 PAGE_SIZE = 1000
 
 VERSION = 'v201809'
@@ -176,7 +178,12 @@ def get_fields_to_sync(discovered_schema, mdata):
 
 def write_schema(stream_name, schema, primary_keys, bookmark_properties=None):
     schema_copy = copy.deepcopy(schema)
-    singer.write_schema(stream_name, schema_copy, primary_keys, bookmark_properties=bookmark_properties)
+    if stream_name not in created_schemas:
+        LOGGER.info(f"Creating schema for stream_name {stream_name}")
+        singer.write_schema(stream_name, schema_copy, primary_keys, bookmark_properties=bookmark_properties)
+        created_schemas.append(stream_name)
+    else:
+        LOGGER.info(f"Schema for stream_name {stream_name} already exists")
 
 # No rate limit here, since this request is only made once
 # per discovery (not sync) job
